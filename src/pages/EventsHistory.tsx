@@ -55,17 +55,17 @@ function EventsHistory() {
         setEvents(evts);
         setPersons(prs);
         if (evts.length > 0) {
-          const latest = [...evts].sort((a, b) => (a.date > b.date ? -1 : a.date < b.date ? 1 : 0))[0];
+          const latest = [...evts].sort((a, b) => (a.date > b.date ? -1 : a.date < b.date ? 1 : 0))[0] as any;
           setSelectedId(latest.id ?? null);
           setEventForm({
             id: latest.id,
             name: latest.name || '',
             location: latest.location || '',
             date: latest.date,
-            asadorId: latest.asadorId ?? null,
-            attendeeCount: latest.attendeeCount || 0,
-            totalFoodCost: latest.totalFoodCost || 0,
-            totalDrinkCost: latest.totalDrinkCost || 0
+            asadorId: latest.asador_id ?? null,
+            attendeeCount: latest.attendee_count || 0,
+            totalFoodCost: latest.total_food_cost || 0,
+            totalDrinkCost: latest.total_drink_cost || 0
           });
         }
       } catch (e) {
@@ -82,15 +82,16 @@ function EventsHistory() {
   useEffect(() => {
     const evt = selectedEvent;
     if (!evt) return;
+    const e: any = evt;
     setEventForm({
-      id: evt.id,
-      name: evt.name || '',
-      location: evt.location || '',
-      date: evt.date,
-      asadorId: evt.asadorId ?? null,
-      attendeeCount: evt.attendeeCount || 0,
-      totalFoodCost: evt.totalFoodCost || 0,
-      totalDrinkCost: evt.totalDrinkCost || 0
+      id: e.id,
+      name: e.name || '',
+      location: e.location || '',
+      date: e.date,
+      asadorId: e.asador_id ?? null,
+      attendeeCount: e.attendee_count || 0,
+      totalFoodCost: e.total_food_cost || 0,
+      totalDrinkCost: e.total_drink_cost || 0
     });
   }, [selectedEvent]);
 
@@ -152,12 +153,12 @@ function EventsHistory() {
         id: eventForm.id,
         name: eventForm.name.trim(),
         location: eventForm.location.trim() || undefined,
-        asadorId: eventForm.asadorId ?? undefined,
+        asador_id: eventForm.asadorId ?? undefined,
         date: eventForm.date,
-        attendeeCount: eventForm.attendeeCount,
-        totalFoodCost: eventForm.totalFoodCost,
-        totalDrinkCost: eventForm.totalDrinkCost
-      });
+        attendee_count: eventForm.attendeeCount,
+        total_food_cost: eventForm.totalFoodCost,
+        total_drink_cost: eventForm.totalDrinkCost
+      } as any);
       const evts = await getEvents();
       setEvents(evts);
       if (eventForm.id) {
@@ -305,12 +306,12 @@ function EventsHistory() {
                       <Stack spacing={0.25}>
                         <Typography fontWeight={600}>{event.date}</Typography>
                         <Typography variant="body2" color="text.secondary">
-                          {event.attendeeCount} attendee{event.attendeeCount === 1 ? '' : 's'}
+                          {(event as any).attendee_count} attendee{(event as any).attendee_count === 1 ? '' : 's'}
                         </Typography>
                       </Stack>
                       <Stack direction="row" spacing={1}>
-                        <Typography variant="body2">Food: {event.totalFoodCost}</Typography>
-                        <Typography variant="body2">Drinks: {event.totalDrinkCost}</Typography>
+                        <Typography variant="body2">Food: {(event as any).total_food_cost}</Typography>
+                        <Typography variant="body2">Drinks: {(event as any).total_drink_cost}</Typography>
                       </Stack>
                     </Stack>
                   </Box>

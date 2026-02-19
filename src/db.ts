@@ -14,12 +14,12 @@ export type Event = {
   id?: number;
   name?: string;
   location?: string;
-  locationId?: number;
-  asadorId?: number;
+  location_id?: number;
+  asador_id?: number;
   date: string;
-  attendeeCount: number;
-  totalFoodCost: number;
-  totalDrinkCost: number;
+  attendee_count: number;
+  total_food_cost: number;
+  total_drink_cost: number;
   photo?: string;
 };
 
@@ -32,12 +32,12 @@ export type Location = {
 
 export type EventDetail = {
   id?: number;
-  eventId: number;
-  personId: number;
-  includeFood?: boolean;
-  includeDrink?: boolean;
-  foodCost?: number;
-  drinkCost?: number;
+  event_id: number;
+  person_id: number;
+  include_food?: boolean;
+  include_drink?: boolean;
+  food_cost?: number;
+  drink_cost?: number;
   note?: string;
 };
 
@@ -142,20 +142,20 @@ export async function deleteEvent(id: number) {
 
 export async function getEventDetailsByEvent(eventId: number) {
   const client = requireClient();
-  const { data, error } = await client.from('eventDetails').select('*').eq('eventId', eventId);
+  const { data, error } = await client.from('eventdetails').select('*').eq('event_id', eventId);
   if (error) throw error;
   return data as EventDetail[];
 }
 
 export async function deleteEventDetailsByEvent(eventId: number) {
   const client = requireClient();
-  const { error } = await client.from('eventDetails').delete().eq('eventId', eventId);
+  const { error } = await client.from('eventdetails').delete().eq('event_id', eventId);
   if (error) throw error;
 }
 
 export async function getEventDetailsByPerson(personId: number) {
   const client = requireClient();
-  const { data, error } = await client.from('eventDetails').select('*').eq('personId', personId);
+  const { data, error } = await client.from('eventdetails').select('*').eq('person_id', personId);
   if (error) throw error;
   return data as EventDetail[];
 }
@@ -164,7 +164,7 @@ export async function saveEventDetail(detail: EventDetail) {
   const client = requireClient();
   const payload = { ...detail } as EventDetail;
   const { data, error } = await client
-    .from('eventDetails')
+    .from('eventdetails')
     .upsert(payload, { onConflict: 'id' })
     .select('id')
     .single();
@@ -174,13 +174,13 @@ export async function saveEventDetail(detail: EventDetail) {
 
 export async function deleteEventDetail(id: number) {
   const client = requireClient();
-  const { error } = await client.from('eventDetails').delete().eq('id', id);
+  const { error } = await client.from('eventdetails').delete().eq('id', id);
   if (error) throw error;
 }
 
 export async function clearDatabase() {
   const client = requireClient();
-  await client.from('eventDetails').delete().neq('id', 0);
+  await client.from('eventdetails').delete().neq('id', 0);
   await client.from('events').delete().neq('id', 0);
   await client.from('persons').delete().neq('id', 0);
   await client.from('locations').delete().neq('id', 0);

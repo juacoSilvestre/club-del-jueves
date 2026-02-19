@@ -60,20 +60,21 @@ function EventDetailCard({ event, details, persons }: EventDetailCardProps) {
 
   const attendees = useMemo(() => {
     return details.map((detail) => {
-      const person = detail.personId != null ? personById.get(detail.personId) : undefined;
-      const foodCost = detail.includeFood === false ? 0 : detail.foodCost ?? 0;
-      const drinkCost = detail.includeDrink === false ? 0 : detail.drinkCost ?? 0;
+      const d: any = detail;
+      const person = d.person_id != null ? personById.get(d.person_id) : undefined;
+      const foodCost = d.include_food === false ? 0 : d.food_cost ?? 0;
+      const drinkCost = d.include_drink === false ? 0 : d.drink_cost ?? 0;
       return {
-        id: detail.id ?? `${detail.eventId}-${detail.personId}`,
-        personId: detail.personId,
+        id: d.id ?? `${d.event_id}-${d.person_id}`,
+        personId: d.person_id,
         name: person?.name ?? 'Unknown person',
         alias: person?.alias,
-        note: detail.note || '',
+        note: d.note || '',
         foodCost,
         drinkCost,
         totalPaid: foodCost + drinkCost,
-        includeFood: detail.includeFood !== false,
-        includeDrink: detail.includeDrink !== false
+        includeFood: d.include_food !== false,
+        includeDrink: d.include_drink !== false
       };
     });
   }, [details, personById]);
@@ -180,10 +181,11 @@ function EventDetailCard({ event, details, persons }: EventDetailCardProps) {
   }, [attendees]);
 
   const asadorName = useMemo(() => {
-    if (!event.asadorId) return null;
-    const p = persons.find((person) => person.id === event.asadorId);
+    const asadorId = (event as any).asador_id;
+    if (!asadorId) return null;
+    const p = persons.find((person) => person.id === asadorId);
     return p?.name || null;
-  }, [event.asadorId, persons]);
+  }, [event, persons]);
 
   return (
     <Card>
@@ -193,7 +195,7 @@ function EventDetailCard({ event, details, persons }: EventDetailCardProps) {
             <Stack spacing={0.5}>
               <Typography variant="h6">{event.name || 'Event'} on {event.date}</Typography>
               <Typography variant="body2" color="text.secondary">
-                {event.attendeeCount} attendee{event.attendeeCount === 1 ? '' : 's'}{event.location ? ` · ${event.location}` : ''}
+                {(event as any).attendee_count} attendee{(event as any).attendee_count === 1 ? '' : 's'}{event.location ? ` · ${event.location}` : ''}
               </Typography>
               {asadorName && (
                 <Typography variant="body2" color="text.secondary">
@@ -202,8 +204,8 @@ function EventDetailCard({ event, details, persons }: EventDetailCardProps) {
               )}
             </Stack>
             <Stack direction="row" spacing={1} flexWrap="wrap">
-              <Chip label={`Food: ${formatCurrency(event.totalFoodCost)}`} size="small" />
-              <Chip label={`Drinks: ${formatCurrency(event.totalDrinkCost)}`} size="small" />
+              <Chip label={`Food: ${formatCurrency((event as any).total_food_cost)}`} size="small" />
+              <Chip label={`Drinks: ${formatCurrency((event as any).total_drink_cost)}`} size="small" />
             </Stack>
           </Stack>
 

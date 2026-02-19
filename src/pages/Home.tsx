@@ -200,32 +200,32 @@ function Home() {
     if (!latestEvent) return;
     setFormMode('edit');
     setEditingEventId(latestEvent.id ?? null);
-    const matchedLocation = locations.find((l) => l.id === latestEvent.locationId) || locations.find((l) => l.name === latestEvent.location);
+    const matchedLocation = locations.find((l) => l.id === latestEvent.location_id) || locations.find((l) => l.name === latestEvent.location);
     setEventForm({
       name: latestEvent.name || '',
       location: matchedLocation?.name || latestEvent.location || '',
       locationId: matchedLocation?.id ?? null,
       date: latestEvent.date,
-      asadorId: latestEvent.asadorId ?? null,
+      asadorId: latestEvent.asador_id ?? null,
       photo: latestEvent.photo || ''
     });
 
     const detailByPerson = new Map<number, EventDetail>();
     details.forEach((d) => {
-      if (d.personId != null) detailByPerson.set(d.personId, d);
+      if ((d as any).person_id != null) detailByPerson.set((d as any).person_id, d as any);
     });
 
     setAttendees((prev) =>
       prev.map((a) => {
         const det = detailByPerson.get(a.personId);
-        if (!det) return { ...a, selected: false, foodCost: 0, drinkCost: 0, includeFood: true, includeDrink: true };
+          if (!det) return { ...a, selected: false, foodCost: 0, drinkCost: 0, includeFood: true, includeDrink: true };
         return {
           ...a,
           selected: true,
-          includeFood: det.includeFood !== false,
-          includeDrink: det.includeDrink !== false,
-          foodCost: det.includeFood === false ? 0 : det.foodCost ?? 0,
-          drinkCost: det.includeDrink === false ? 0 : det.drinkCost ?? 0
+          includeFood: (det as any).include_food !== false,
+          includeDrink: (det as any).include_drink !== false,
+          foodCost: (det as any).include_food === false ? 0 : (det as any).food_cost ?? 0,
+          drinkCost: (det as any).include_drink === false ? 0 : (det as any).drink_cost ?? 0
         };
       })
     );
@@ -251,14 +251,14 @@ function Home() {
         id: formMode === 'edit' ? editingEventId ?? undefined : undefined,
         name: eventForm.name.trim(),
         location: (selectedLocation?.name || eventForm.location).trim() || undefined,
-        locationId: selectedLocation?.id ?? undefined,
-        asadorId: eventForm.asadorId ?? undefined,
+        location_id: selectedLocation?.id ?? undefined,
+        asador_id: eventForm.asadorId ?? undefined,
         photo: eventForm.photo || undefined,
         date: eventForm.date,
-        attendeeCount,
-        totalFoodCost,
-        totalDrinkCost
-      });
+        attendee_count: attendeeCount,
+        total_food_cost: totalFoodCost,
+        total_drink_cost: totalDrinkCost
+      } as any);
 
       if (formMode === 'edit' && editingEventId) {
         await deleteEventDetailsByEvent(editingEventId);
@@ -267,13 +267,13 @@ function Home() {
       await Promise.all(
         selected.map((a) =>
           saveEventDetail({
-            eventId,
-            personId: a.personId,
-            includeFood: a.includeFood,
-            includeDrink: a.includeDrink,
-            foodCost: a.includeFood ? a.foodCost : 0,
-            drinkCost: a.includeDrink ? a.drinkCost : 0
-          })
+            event_id: eventId,
+            person_id: a.personId,
+            include_food: a.includeFood,
+            include_drink: a.includeDrink,
+            food_cost: a.includeFood ? a.foodCost : 0,
+            drink_cost: a.includeDrink ? a.drinkCost : 0
+          } as any)
         )
       );
 

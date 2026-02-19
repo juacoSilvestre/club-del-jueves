@@ -354,8 +354,10 @@ const Dashboard = () => {
       const evtId = evt.id;
       if (evtId == null) return;
       const detail = detailsByEvent[evtId] || [];
-      detail.forEach((d) => {
-        counts.set(d.personId, (counts.get(d.personId) || 0) + 1);
+      detail.forEach((d: any) => {
+        const pid = d.person_id as number | undefined;
+        if (pid == null) return;
+        counts.set(pid, (counts.get(pid) || 0) + 1);
       });
     });
     const rows: StatRow[] = [];
@@ -386,9 +388,10 @@ const Dashboard = () => {
 
   const asadorRows = useMemo<StatRow[]>(() => {
     const counts = new Map<number, number>();
-    events.forEach((evt) => {
-      if (evt.asadorId == null) return;
-      counts.set(evt.asadorId, (counts.get(evt.asadorId) || 0) + 1);
+    events.forEach((evt: any) => {
+      const aid = evt.asador_id as number | undefined;
+      if (aid == null) return;
+      counts.set(aid, (counts.get(aid) || 0) + 1);
     });
     const rows: StatRow[] = [];
     counts.forEach((value, personId) => {
@@ -406,15 +409,16 @@ const Dashboard = () => {
   const contributionRows = useMemo<ContributionRow[]>(() => {
     const counts = new Map<number, { food: number; drink: number }>();
     Object.values(detailsByEvent).forEach((list) => {
-      list.forEach((detail) => {
-        if (detail.personId == null) return;
-        const spentFood = (detail.foodCost ?? 0) > 0 || detail.includeFood;
-        const spentDrink = (detail.drinkCost ?? 0) > 0 || detail.includeDrink;
+      list.forEach((detail: any) => {
+        const pid = detail.person_id as number | undefined;
+        if (pid == null) return;
+        const spentFood = (detail.food_cost ?? 0) > 0 || detail.include_food;
+        const spentDrink = (detail.drink_cost ?? 0) > 0 || detail.include_drink;
         if (!spentFood && !spentDrink) return;
-        const current = counts.get(detail.personId) || { food: 0, drink: 0 };
+        const current = counts.get(pid) || { food: 0, drink: 0 };
         if (spentFood) current.food += 1;
         if (spentDrink) current.drink += 1;
-        counts.set(detail.personId, current);
+        counts.set(pid, current);
       });
     });
 
@@ -440,7 +444,7 @@ const Dashboard = () => {
       .sort((a, b) => a.date.localeCompare(b.date))
       .map((evt) => {
         const detail = detailsByEvent[evt.id as number] || [];
-        return detail.length || evt.attendeeCount || 0;
+        return detail.length || (evt as any).attendee_count || 0;
       });
   }, [detailsByEvent, events]);
   const attendanceLabels = useMemo(() => {
