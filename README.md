@@ -20,6 +20,15 @@ React + TypeScript app scaffolded without Vite, using React Scripts, Redux Toolk
    ```bash
    npm run deploy
    ```
+
+### Environment variables (Supabase)
+
+Create a `.env` file and add:
+
+- `REACT_APP_SUPABASE_URL` = your Supabase project URL
+- `REACT_APP_SUPABASE_ANON_KEY` = your Supabase anon public key
+
+Restart `npm start` after setting env vars.
 4. Run tests:
    ```bash
    npm test
@@ -33,9 +42,10 @@ React + TypeScript app scaffolded without Vite, using React Scripts, Redux Toolk
 
 ## App structure
 
-- Routing: Home (`/`), Dashboard (`/dashboard`), Events (`/events`), Administration (`/admin`), and Login (`/login`) via React Router v6.
+- Routing: Home (`/`), Dashboard (`/dashboard`), Events (`/events`), Administration (`/admin`), and Login (`/login`) via React Router v6 (HashRouter for GitHub Pages).
 - Layout: MUI AppBar with navigation, themed using a custom MUI theme and Roboto font.
 - State: Redux Toolkit store with `app` and `auth` slices; auth is persisted to `localStorage`.
+- Data: Supabase tables `persons`, `events`, `eventDetails`, `locations` (columns align with types in `src/db.ts`).
 - Deploy: `npm run deploy` publishes `build/` to `gh-pages` branch for GitHub Pages.
 
 ## Local data (IndexedDB)

@@ -27,7 +27,7 @@ const emptyLocation: Required<Pick<Location, 'name'>> & Omit<Location, 'name'> =
   id: undefined,
   name: '',
   address: '',
-  mapsUrl: ''
+  maps_url: ''
 };
 
 function Locations() {
@@ -74,7 +74,7 @@ function Locations() {
       id: loc.id,
       name: loc.name,
       address: loc.address || '',
-      mapsUrl: loc.mapsUrl || ''
+      maps_url: loc.maps_url || ''
     });
   };
 
@@ -115,7 +115,7 @@ function Locations() {
         id: form.id,
         name: form.name.trim(),
         address: form.address?.trim() || undefined,
-        mapsUrl: form.mapsUrl?.trim() || undefined
+        maps_url: form.maps_url?.trim() || undefined
       });
       const data = await getLocations();
       setLocations(data);
@@ -142,7 +142,7 @@ function Locations() {
             <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} alignItems={{ md: 'flex-end' }}>
               <TextField label="Name" value={form.name} onChange={handleChange('name')} required fullWidth />
               <TextField label="Address" value={form.address} onChange={handleChange('address')} fullWidth />
-              <TextField label="Google Maps link" value={form.mapsUrl} onChange={handleChange('mapsUrl')} fullWidth />
+              <TextField label="Google Maps link" value={form.maps_url} onChange={handleChange('maps_url')} fullWidth />
               <Stack direction="row" spacing={1}>
                 <Button type="submit" variant="contained" disabled={saving}>
                   {form.id ? 'Update' : 'Create'}
@@ -193,8 +193,8 @@ function Locations() {
                     </TableCell>
                     <TableCell>{loc.address || '—'}</TableCell>
                     <TableCell>
-                      {loc.mapsUrl ? (
-                        <Link href={loc.mapsUrl} target="_blank" rel="noopener noreferrer">
+                      {loc.maps_url ? (
+                        <Link href={loc.maps_url} target="_blank" rel="noopener noreferrer">
                           Maps
                         </Link>
                       ) : (

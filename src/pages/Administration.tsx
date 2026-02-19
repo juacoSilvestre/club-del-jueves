@@ -23,6 +23,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { type Person, type Location, deletePerson, getPersons, savePerson, getLocations, saveLocation, deleteLocation } from '../db';
 import { useAppSelector } from '../hooks';
+import { resizeImageTo100 } from '../utils/resizeImage';
 
 type PersonFormState = Required<Pick<Person, 'name'>> & Omit<Person, 'name'>;
 
@@ -57,7 +58,7 @@ function Administration() {
   const [locations, setLocations] = useState<Location[]>([]);
   const [locationsLoading, setLocationsLoading] = useState(false);
   const [locationSaving, setLocationSaving] = useState(false);
-  const [locationForm, setLocationForm] = useState<Location>({ id: undefined, name: '', address: '', mapsUrl: '' });
+  const [locationForm, setLocationForm] = useState<Location>({ id: undefined, name: '', address: '', maps_url: '' });
   const [locationError, setLocationError] = useState('');
 
   const sortedPersons = useMemo(() => {
@@ -110,7 +111,14 @@ function Administration() {
       return;
     }
     try {
-      const dataUrl = await fileToDataUrl(file);
+      // Resize to 100x100 and store as base64 data URL
+      const resizedBlob = await resizeImageTo100(file);
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : '');
+        reader.onerror = () => reject(reader.error || new Error('Could not read file'));
+        reader.readAsDataURL(resizedBlob);
+      });
       setForm((prev) => ({ ...prev, photo: dataUrl }));
       setError('');
     } catch (e) {
@@ -179,17 +187,17 @@ function Administration() {
     return 'Unexpected error';
   };
 
-  const handleLocationChange = (field: 'name' | 'address' | 'mapsUrl') => (event: ChangeEvent<HTMLInputElement>) => {
+  const handleLocationChange = (field: 'name' | 'address' | 'maps_url') => (event: ChangeEvent<HTMLInputElement>) => {
     setLocationForm((prev) => ({ ...prev, [field]: event.target.value }));
   };
 
   const resetLocationForm = () => {
-    setLocationForm({ id: undefined, name: '', address: '', mapsUrl: '' });
+    setLocationForm({ id: undefined, name: '', address: '', maps_url: '' });
     setLocationError('');
   };
 
   const handleLocationEdit = (loc: Location) => {
-    setLocationForm({ id: loc.id, name: loc.name, address: loc.address || '', mapsUrl: loc.mapsUrl || '' });
+    setLocationForm({ id: loc.id, name: loc.name, address: loc.address || '', maps_url: loc.maps_url || '' });
   };
 
   const handleLocationDelete = async (id?: number) => {
@@ -251,7 +259,7 @@ function Administration() {
         id: locationForm.id,
         name: locationForm.name.trim(),
         address: locationForm.address?.trim() || undefined,
-        mapsUrl: locationForm.mapsUrl?.trim() || undefined
+        maps_url: locationForm.maps_url?.trim() || undefined
       });
       const data = await getLocations();
       setLocations(data);
@@ -428,7 +436,7 @@ function Administration() {
             <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} alignItems={{ md: 'flex-end' }}>
               <TextField label="Name" value={locationForm.name} onChange={handleLocationChange('name')} required fullWidth />
               <TextField label="Address" value={locationForm.address} onChange={handleLocationChange('address')} fullWidth />
-              <TextField label="Google Maps link" value={locationForm.mapsUrl} onChange={handleLocationChange('mapsUrl')} fullWidth />
+              <TextField label="Google Maps link" value={locationForm.maps_url} onChange={handleLocationChange('maps_url')} fullWidth />
               <Stack direction="row" spacing={1}>
                 <Button type="submit" variant="contained" disabled={locationSaving}>
                   {locationForm.id ? 'Update' : 'Create'}
@@ -479,8 +487,8 @@ function Administration() {
                     </TableCell>
                     <TableCell>{loc.address || '—'}</TableCell>
                     <TableCell>
-                      {loc.mapsUrl ? (
-                        <MuiLink href={loc.mapsUrl} target="_blank" rel="noopener noreferrer">
+                      {loc.maps_url ? (
+                        <MuiLink href={loc.maps_url} target="_blank" rel="noopener noreferrer">
                           Maps
                         </MuiLink>
                       ) : (

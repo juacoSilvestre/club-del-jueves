@@ -1,4 +1,4 @@
-import { openDB, type DBSchema } from 'idb';
+import { supabase } from './supabase';
 
 export type Person = {
   id?: number;
@@ -7,7 +7,7 @@ export type Person = {
   birthdate?: string;
   email?: string;
   photo?: string;
-  passwordHash?: string;
+  password_hash?: string;
 };
 
 export type Event = {
@@ -27,7 +27,7 @@ export type Location = {
   id?: number;
   name: string;
   address?: string;
-  mapsUrl?: string;
+  maps_url?: string;
 };
 
 export type EventDetail = {
@@ -41,106 +41,61 @@ export type EventDetail = {
   note?: string;
 };
 
-interface LocalDb extends DBSchema {
-  persons: {
-    key: number;
-    value: Person;
-    indexes: { 'by-email': string; 'by-name': string };
-  };
-  events: {
-    key: number;
-    value: Event;
-    indexes: { 'by-date': string };
-  };
-  eventDetails: {
-    key: number;
-    value: EventDetail;
-    indexes: { 'by-event': number; 'by-person': number };
-  };
-  locations: {
-    key: number;
-    value: Location;
-    indexes: { 'by-name': string };
-  };
-}
-
-const dbPromise = openDB<LocalDb>('cdj-local-db', 4, {
-  upgrade(db, _oldVersion, _newVersion, transaction) {
-    let personsStore;
-    if (!db.objectStoreNames.contains('persons')) {
-      personsStore = db.createObjectStore('persons', { keyPath: 'id', autoIncrement: true });
-    } else {
-      personsStore = transaction.objectStore('persons');
-    }
-
-    if (personsStore) {
-      if (!personsStore.indexNames.contains('by-email')) {
-        personsStore.createIndex('by-email', 'email');
-      }
-      if (!personsStore.indexNames.contains('by-name')) {
-        personsStore.createIndex('by-name', 'name');
-      }
-    }
-
-    if (!db.objectStoreNames.contains('events')) {
-      const events = db.createObjectStore('events', { keyPath: 'id', autoIncrement: true });
-      events.createIndex('by-date', 'date');
-    }
-
-    if (!db.objectStoreNames.contains('eventDetails')) {
-      const details = db.createObjectStore('eventDetails', { keyPath: 'id', autoIncrement: true });
-      details.createIndex('by-event', 'eventId');
-      details.createIndex('by-person', 'personId');
-    }
-
-    if (!db.objectStoreNames.contains('locations')) {
-      const locations = db.createObjectStore('locations', { keyPath: 'id', autoIncrement: true });
-      locations.createIndex('by-name', 'name');
-    }
+const requireClient = () => {
+  if (!supabase) {
+    throw new Error('Supabase client not configured. Set REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_ANON_KEY.');
   }
-});
+  return supabase;
+};
 
 export async function getPersons() {
-  return (await dbPromise).getAll('persons');
+  const client = requireClient();
+  const { data, error } = await client.from('persons').select('*').order('name', { ascending: true });
+  if (error) throw error;
+  return data as Person[];
 }
 
 export async function getPerson(id: number) {
-  return (await dbPromise).get('persons', id);
+  const client = requireClient();
+  const { data, error } = await client.from('persons').select('*').eq('id', id).single();
+  if (error) throw error;
+  return data as Person;
 }
 
 export async function savePerson(person: Person) {
-  const db = await dbPromise;
+  const client = requireClient();
   const payload = { ...person } as Person;
-  if (payload.email) {
-    payload.email = payload.email.trim().toLowerCase();
-  }
-  if (!payload.id) {
-    delete (payload as { id?: number }).id;
-    return (await db.add('persons', payload)) as number;
-  }
-  return (await db.put('persons', payload)) as number;
+  if (payload.email) payload.email = payload.email.trim().toLowerCase();
+  const { data, error } = await client
+    .from('persons')
+    .upsert(payload, { onConflict: 'id' })
+    .select('id')
+    .single();
+  if (error) throw error;
+  return (data as { id: number }).id;
 }
 
 export async function deletePerson(id: number) {
-  return (await dbPromise).delete('persons', id);
+  const client = requireClient();
+  const { error } = await client.from('persons').delete().eq('id', id);
+  if (error) throw error;
 }
 
 export async function findPersonByEmail(email: string) {
+  const client = requireClient();
   const normalized = email.trim().toLowerCase();
-  const db = await dbPromise;
-  const byIndex = await db.getFromIndex('persons', 'by-email', normalized);
-  if (byIndex) return byIndex;
-  const all = await getPersons();
-  return all.find((p) => (p.email || '').trim().toLowerCase() === normalized);
+  const { data, error } = await client.from('persons').select('*').eq('email', normalized).maybeSingle();
+  if (error) throw error;
+  return data as Person | null;
 }
 
 export async function findPersonsByName(name: string) {
+  const client = requireClient();
   const normalized = name.trim().toLowerCase();
-  const db = await dbPromise;
-  const byIndex = await db.getAllFromIndex('persons', 'by-name', normalized);
-  if (byIndex.length) return byIndex;
-  const all = await getPersons();
-  return all.filter((p) => (p.name || '').trim().toLowerCase() === normalized);
+  const { data, error } = await client.from('persons').select('*').ilike('name', normalized);
+  if (error) throw error;
+  const exact = (data as Person[]).filter((p) => (p.name || '').trim().toLowerCase() === normalized);
+  return exact;
 }
 
 export async function findPersonByIdentifier(identifier: string) {
@@ -154,91 +109,111 @@ export async function findPersonByIdentifier(identifier: string) {
 }
 
 export async function getEvents() {
-  return (await dbPromise).getAll('events');
+  const client = requireClient();
+  const { data, error } = await client.from('events').select('*').order('date', { ascending: false });
+  if (error) throw error;
+  return data as Event[];
 }
 
 export async function getEvent(id: number) {
-  return (await dbPromise).get('events', id);
+  const client = requireClient();
+  const { data, error } = await client.from('events').select('*').eq('id', id).single();
+  if (error) throw error;
+  return data as Event;
 }
 
 export async function saveEvent(event: Event) {
-  const db = await dbPromise;
+  const client = requireClient();
   const payload = { ...event } as Event;
-  if (!payload.id) {
-    delete (payload as { id?: number }).id;
-    return (await db.add('events', payload)) as number;
-  }
-  return (await db.put('events', payload)) as number;
+  const { data, error } = await client
+    .from('events')
+    .upsert(payload, { onConflict: 'id' })
+    .select('id')
+    .single();
+  if (error) throw error;
+  return (data as { id: number }).id;
 }
 
 export async function deleteEvent(id: number) {
-  return (await dbPromise).delete('events', id);
+  const client = requireClient();
+  const { error } = await client.from('events').delete().eq('id', id);
+  if (error) throw error;
 }
 
 export async function getEventDetailsByEvent(eventId: number) {
-  const db = await dbPromise;
-  return db.getAllFromIndex('eventDetails', 'by-event', eventId);
+  const client = requireClient();
+  const { data, error } = await client.from('eventDetails').select('*').eq('eventId', eventId);
+  if (error) throw error;
+  return data as EventDetail[];
 }
 
 export async function deleteEventDetailsByEvent(eventId: number) {
-  const db = await dbPromise;
-  const tx = db.transaction('eventDetails', 'readwrite');
-  const index = tx.store.index('by-event');
-  for await (const cursor of index.iterate(eventId)) {
-    await cursor.delete();
-  }
-  await tx.done;
+  const client = requireClient();
+  const { error } = await client.from('eventDetails').delete().eq('eventId', eventId);
+  if (error) throw error;
 }
 
 export async function getEventDetailsByPerson(personId: number) {
-  const db = await dbPromise;
-  return db.getAllFromIndex('eventDetails', 'by-person', personId);
+  const client = requireClient();
+  const { data, error } = await client.from('eventDetails').select('*').eq('personId', personId);
+  if (error) throw error;
+  return data as EventDetail[];
 }
 
 export async function saveEventDetail(detail: EventDetail) {
-  const db = await dbPromise;
+  const client = requireClient();
   const payload = { ...detail } as EventDetail;
-  if (!payload.id) {
-    delete (payload as { id?: number }).id;
-    return (await db.add('eventDetails', payload)) as number;
-  }
-  return (await db.put('eventDetails', payload)) as number;
+  const { data, error } = await client
+    .from('eventDetails')
+    .upsert(payload, { onConflict: 'id' })
+    .select('id')
+    .single();
+  if (error) throw error;
+  return (data as { id: number }).id;
 }
 
 export async function deleteEventDetail(id: number) {
-  return (await dbPromise).delete('eventDetails', id);
+  const client = requireClient();
+  const { error } = await client.from('eventDetails').delete().eq('id', id);
+  if (error) throw error;
 }
 
 export async function clearDatabase() {
-  const db = await dbPromise;
-  const tx = db.transaction(['persons', 'events', 'eventDetails', 'locations'], 'readwrite');
-  await Promise.all([
-    tx.objectStore('persons').clear(),
-    tx.objectStore('events').clear(),
-    tx.objectStore('eventDetails').clear(),
-    tx.objectStore('locations').clear()
-  ]);
-  await tx.done;
+  const client = requireClient();
+  await client.from('eventDetails').delete().neq('id', 0);
+  await client.from('events').delete().neq('id', 0);
+  await client.from('persons').delete().neq('id', 0);
+  await client.from('locations').delete().neq('id', 0);
 }
 
 export async function getLocations() {
-  return (await dbPromise).getAll('locations');
+  const client = requireClient();
+  const { data, error } = await client.from('locations').select('*').order('name', { ascending: true });
+  if (error) throw error;
+  return data as Location[];
 }
 
 export async function getLocation(id: number) {
-  return (await dbPromise).get('locations', id);
+  const client = requireClient();
+  const { data, error } = await client.from('locations').select('*').eq('id', id).single();
+  if (error) throw error;
+  return data as Location;
 }
 
 export async function saveLocation(location: Location) {
-  const db = await dbPromise;
+  const client = requireClient();
   const payload = { ...location } as Location;
-  if (!payload.id) {
-    delete (payload as { id?: number }).id;
-    return (await db.add('locations', payload)) as number;
-  }
-  return (await db.put('locations', payload)) as number;
+  const { data, error } = await client
+    .from('locations')
+    .upsert(payload, { onConflict: 'id' })
+    .select('id')
+    .single();
+  if (error) throw error;
+  return (data as { id: number }).id;
 }
 
 export async function deleteLocation(id: number) {
-  return (await dbPromise).delete('locations', id);
+  const client = requireClient();
+  const { error } = await client.from('locations').delete().eq('id', id);
+  if (error) throw error;
 }

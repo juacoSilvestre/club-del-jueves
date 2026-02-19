@@ -4,6 +4,7 @@ import { Alert, Avatar, Button, Card, CardContent, Collapse, Stack, TextField, T
 import LoginIcon from '@mui/icons-material/Login';
 import LogoutIcon from '@mui/icons-material/Logout';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import EditIcon from '@mui/icons-material/Edit';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import { useAppDispatch, useAppSelector } from '../hooks';
@@ -11,6 +12,7 @@ import { setUser, signOut } from '../features/auth/authSlice';
 import { findPersonByIdentifier, savePerson, getPerson } from '../db';
 import { hashPassword, passwordsMatch } from '../auth/password';
 import type { Person } from '../db';
+import { resizeImageTo100 } from '../utils/resizeImage';
 
 function Login() {
   const dispatch = useAppDispatch();
@@ -67,12 +69,12 @@ function Login() {
     setLoginError('');
     try {
       const person = await findPersonByIdentifier(normalizeIdentifier(loginIdentifier));
-      if (!person || !person.passwordHash || person.id == null) {
+      if (!person || !person.password_hash || person.id == null) {
         setLoginError('User not found or missing password.');
         return;
       }
 
-      const ok = await passwordsMatch(loginPassword, person.passwordHash);
+      const ok = await passwordsMatch(loginPassword, person.password_hash);
       if (!ok) {
         setLoginError('Invalid credentials.');
         return;
@@ -118,7 +120,7 @@ function Login() {
         return;
       }
 
-      const passwordHash = await hashPassword(registerPassword);
+      const password_hash = await hashPassword(registerPassword);
       const payload = {
         id: editPerson?.id,
         name: registerName.trim(),
@@ -126,7 +128,7 @@ function Login() {
         alias: registerAlias.trim() || undefined,
         birthdate: registerBirthdate || undefined,
         photo: registerPhoto || undefined,
-        passwordHash
+        password_hash: password_hash
       };
 
       const newId = await savePerson(payload);
@@ -153,7 +155,14 @@ function Login() {
       return;
     }
     try {
-      const dataUrl = await fileToDataUrl(file);
+      // Resize to 100x100 and store as base64 data URL
+      const resizedBlob = await resizeImageTo100(file);
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : '');
+        reader.onerror = () => reject(reader.error || new Error('Could not read image'));
+        reader.readAsDataURL(resizedBlob);
+      });
       setRegisterPhoto(dataUrl);
       setRegisterError('');
     } catch (e) {
@@ -216,7 +225,7 @@ function Login() {
                 </Stack>
               </Stack>
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ sm: 'center' }}>
-                <Button variant="outlined" onClick={loadEditPerson} disabled={busy}>
+                <Button variant="outlined" onClick={loadEditPerson} disabled={true}>
                   Edit profile
                 </Button>
                 <Button variant="outlined" color="secondary" startIcon={<LogoutIcon />} onClick={handleSignOut} disabled={busy}>
@@ -259,12 +268,12 @@ function Login() {
       </Card>
       )}
 
-      {!authUser && (
+      {(!authUser || showRegister) && (
       <Card>
         <CardContent>
           <Stack spacing={2}>
             <Typography variant="h6" display="flex" alignItems="center" gap={1}>
-              <PersonAddIcon fontSize="small" /> Register
+              {editPerson ? <EditIcon fontSize="small" /> : <PersonAddIcon fontSize="small" />} {editPerson ? 'Edit profile' : 'Register'}
             </Typography>
             <Stack direction="row" spacing={1} alignItems="center">
               <Button
@@ -326,8 +335,8 @@ function Login() {
                     fullWidth
                   />
                   <Stack direction="row" spacing={1}>
-                    <Button variant="outlined" startIcon={<PersonAddIcon />} onClick={handleRegister} disabled={busy}>
-                      Create account
+                    <Button variant="outlined" startIcon={editPerson ? <EditIcon /> : <PersonAddIcon />} onClick={handleRegister} disabled={busy}>
+                      {editPerson ? 'Update account' : 'Create account'}
                     </Button>
                     <Button variant="text" onClick={() => { resetRegisterForm(); setShowRegister(false); }} disabled={busy}>
                       Cancel
