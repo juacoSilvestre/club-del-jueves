@@ -8,6 +8,7 @@ import {
   CircularProgress,
   IconButton,
   Stack,
+  TableContainer,
   Table,
   TableBody,
   TableCell,
@@ -173,54 +174,56 @@ function Locations() {
               No locations yet. Add one using the form above.
             </Typography>
           ) : (
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Name</TableCell>
-                  <TableCell>Address</TableCell>
-                  <TableCell>Maps</TableCell>
-                  <TableCell align="right">Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {sortedLocations.map((loc) => (
-                  <TableRow key={loc.id ?? loc.name} hover>
-                    <TableCell>
-                      <Stack direction="row" spacing={1} alignItems="center">
-                        <Avatar sx={{ width: 32, height: 32 }}>{loc.name.charAt(0)}</Avatar>
-                        <Typography variant="body2">{loc.name}</Typography>
-                      </Stack>
-                    </TableCell>
-                    <TableCell>{loc.address || '—'}</TableCell>
-                    <TableCell>
-                      {loc.maps_url ? (
-                        <Link href={loc.maps_url} target="_blank" rel="noopener noreferrer">
-                          Maps
-                        </Link>
-                      ) : (
-                        '—'
-                      )}
-                    </TableCell>
-                    <TableCell align="right">
-                      <Tooltip title="Edit">
-                        <span>
-                          <IconButton aria-label="Edit" onClick={() => handleEdit(loc)} size="small" disabled={saving}>
-                            <EditIcon fontSize="small" />
-                          </IconButton>
-                        </span>
-                      </Tooltip>
-                      <Tooltip title="Delete">
-                        <span>
-                          <IconButton aria-label="Delete" onClick={() => handleDelete(loc.id)} size="small" disabled={saving}>
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
-                        </span>
-                      </Tooltip>
-                    </TableCell>
+            <TableContainer sx={{ width: '100%', overflowX: 'auto' }}>
+              <Table size="small" sx={{ width: '100%', tableLayout: 'fixed' }}>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Name</TableCell>
+                    <TableCell>Address</TableCell>
+                    <TableCell>Maps</TableCell>
+                    <TableCell align="right">Actions</TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHead>
+                <TableBody>
+                  {sortedLocations.map((loc) => (
+                    <TableRow key={loc.id ?? loc.name} hover>
+                      <TableCell>
+                        <Stack direction="row" spacing={1} alignItems="center">
+                          <Avatar sx={{ width: 32, height: 32, display: { xs: 'none', sm: 'inline-flex' } }}>{loc.name.charAt(0)}</Avatar>
+                          <Typography variant="body2">{loc.name}</Typography>
+                        </Stack>
+                      </TableCell>
+                      <TableCell>{loc.address || '—'}</TableCell>
+                      <TableCell>
+                        {loc.maps_url ? (
+                          <Link href={loc.maps_url} target="_blank" rel="noopener noreferrer">
+                            Maps
+                          </Link>
+                        ) : (
+                          '—'
+                        )}
+                      </TableCell>
+                      <TableCell align="right">
+                        <Tooltip title="Edit">
+                          <span>
+                            <IconButton aria-label="Edit" onClick={() => handleEdit(loc)} size="small" disabled={saving}>
+                              <EditIcon fontSize="small" />
+                            </IconButton>
+                          </span>
+                        </Tooltip>
+                        <Tooltip title="Delete">
+                          <span>
+                            <IconButton aria-label="Delete" onClick={() => handleDelete(loc.id)} size="small" disabled={saving}>
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </span>
+                        </Tooltip>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
           )}
         </CardContent>
       </Card>

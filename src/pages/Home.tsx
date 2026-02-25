@@ -8,6 +8,7 @@ import {
   CircularProgress,
   MenuItem,
   Stack,
+  TableContainer,
   Table,
   TableBody,
   TableCell,
@@ -299,9 +300,9 @@ function Home() {
   };
 
   return (
-    <Stack spacing={2}>
+    <Stack spacing={{ xs: 1.25, sm: 2 }}>
       <Card>
-        <CardContent>
+        <CardContent sx={{ px: { xs: 1.5, sm: 2.5 }, py: { xs: 1.5, sm: 2.5 } }}>
           <Typography variant="h5" component="h1" gutterBottom align="center">
             Club Del Jueves
           </Typography>
@@ -315,7 +316,7 @@ function Home() {
       </Card>
 
       <Card>
-        <CardContent>
+        <CardContent sx={{ px: { xs: 1, sm: 2.5 }, py: { xs: 1, sm: 2.5 } }}>
           <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
             <Typography variant="h6">Latest Event</Typography>
             <Stack direction="row" spacing={1} alignItems="center">
@@ -411,102 +412,104 @@ function Home() {
                 </TextField>
               </Stack>
 
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell sx={{ width: 160 }}>
-                      <Stack direction="row" spacing={1} alignItems="center">
-                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                          Include
-                        </Typography>
-                        <Checkbox
-                          checked={allSelected}
-                          indeterminate={!allSelected && someSelected}
-                          onChange={(e) => toggleAllAttendees(e.target.checked)}
-                          inputProps={{ 'aria-label': 'Select or deselect all attendees' }}
-                          disabled={savingEvent}
-                        />
-                      </Stack>
-                    </TableCell>
-                    <TableCell>Name</TableCell>
-                    <TableCell>Food</TableCell>
-                    <TableCell>Drinks</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {attendees.map((attendee) => {
-                    const person = persons.find((p) => p.id === attendee.personId);
-                    return (
-                      <TableRow key={attendee.personId}>
-                        <TableCell>
+              <TableContainer sx={{ width: '100%', overflowX: 'auto' }}>
+                <Table size="small" sx={{ width: '100%', tableLayout: 'fixed' }}>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell sx={{ width: 160 }}>
+                        <Stack direction="row" spacing={1} alignItems="center">
+                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                            Include
+                          </Typography>
                           <Checkbox
-                            checked={attendee.selected}
-                            onChange={(e) => updateAttendee(attendee.personId, (prev) => ({ ...prev, selected: e.target.checked }))}
+                            checked={allSelected}
+                            indeterminate={!allSelected && someSelected}
+                            onChange={(e) => toggleAllAttendees(e.target.checked)}
+                            inputProps={{ 'aria-label': 'Select or deselect all attendees' }}
+                            disabled={savingEvent}
                           />
-                        </TableCell>
-                        <TableCell>
-                          <Stack direction="row" spacing={1} alignItems="center">
-                            <Avatar
-                              src={person?.photo || undefined}
-                              sx={{ width: 32, height: 32 }}
-                              alt={person?.name || 'Person'}
-                            >
-                              {(person?.name || 'U').charAt(0)}
-                            </Avatar>
-                            <Typography variant="body2">{person?.name || 'Unknown'}</Typography>
-                          </Stack>
-                        </TableCell>
-                        <TableCell>
-                          <Stack direction="row" spacing={1} alignItems="center">
+                        </Stack>
+                      </TableCell>
+                      <TableCell>Name</TableCell>
+                      <TableCell>Food</TableCell>
+                      <TableCell>Drinks</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {attendees.map((attendee) => {
+                      const person = persons.find((p) => p.id === attendee.personId);
+                      return (
+                        <TableRow key={attendee.personId}>
+                          <TableCell>
                             <Checkbox
-                              checked={attendee.includeFood}
-                              onChange={(e) => updateAttendee(attendee.personId, (prev) => ({ ...prev, includeFood: e.target.checked }))}
-                              disabled={!attendee.selected}
+                              checked={attendee.selected}
+                              onChange={(e) => updateAttendee(attendee.personId, (prev) => ({ ...prev, selected: e.target.checked }))}
                             />
-                            <TextField
-                              type="number"
-                              size="small"
-                              label="Food"
-                              inputProps={{ min: 0 }}
-                              value={attendee.foodCost}
-                              onChange={(e) =>
-                                updateAttendee(attendee.personId, (prev) => ({
-                                  ...prev,
-                                  foodCost: Number(e.target.value) || 0
-                                }))
-                              }
-                              disabled={!attendee.selected}
-                            />
-                          </Stack>
-                        </TableCell>
-                        <TableCell>
-                          <Stack direction="row" spacing={1} alignItems="center">
-                            <Checkbox
-                              checked={attendee.includeDrink}
-                              onChange={(e) => updateAttendee(attendee.personId, (prev) => ({ ...prev, includeDrink: e.target.checked }))}
-                              disabled={!attendee.selected}
-                            />
-                            <TextField
-                              type="number"
-                              size="small"
-                              label="Drinks"
-                              inputProps={{ min: 0 }}
-                              value={attendee.drinkCost}
-                              onChange={(e) =>
-                                updateAttendee(attendee.personId, (prev) => ({
-                                  ...prev,
-                                  drinkCost: Number(e.target.value) || 0
-                                }))
-                              }
-                              disabled={!attendee.selected}
-                            />
-                          </Stack>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+                          </TableCell>
+                          <TableCell>
+                            <Stack direction="row" spacing={1} alignItems="center">
+                              <Avatar
+                                src={person?.photo || undefined}
+                                sx={{ width: 32, height: 32, display: { xs: 'none', sm: 'inline-flex' } }}
+                                alt={person?.name || 'Person'}
+                              >
+                                {(person?.name || 'U').charAt(0)}
+                              </Avatar>
+                              <Typography variant="body2">{person?.name || 'Unknown'}</Typography>
+                            </Stack>
+                          </TableCell>
+                          <TableCell>
+                            <Stack direction="row" spacing={1} alignItems="center">
+                              <Checkbox
+                                checked={attendee.includeFood}
+                                onChange={(e) => updateAttendee(attendee.personId, (prev) => ({ ...prev, includeFood: e.target.checked }))}
+                                disabled={!attendee.selected}
+                              />
+                              <TextField
+                                type="number"
+                                size="small"
+                                label="Food"
+                                inputProps={{ min: 0 }}
+                                value={attendee.foodCost}
+                                onChange={(e) =>
+                                  updateAttendee(attendee.personId, (prev) => ({
+                                    ...prev,
+                                    foodCost: Number(e.target.value) || 0
+                                  }))
+                                }
+                                disabled={!attendee.selected}
+                              />
+                            </Stack>
+                          </TableCell>
+                          <TableCell>
+                            <Stack direction="row" spacing={1} alignItems="center">
+                              <Checkbox
+                                checked={attendee.includeDrink}
+                                onChange={(e) => updateAttendee(attendee.personId, (prev) => ({ ...prev, includeDrink: e.target.checked }))}
+                                disabled={!attendee.selected}
+                              />
+                              <TextField
+                                type="number"
+                                size="small"
+                                label="Drinks"
+                                inputProps={{ min: 0 }}
+                                value={attendee.drinkCost}
+                                onChange={(e) =>
+                                  updateAttendee(attendee.personId, (prev) => ({
+                                    ...prev,
+                                    drinkCost: Number(e.target.value) || 0
+                                  }))
+                                }
+                                disabled={!attendee.selected}
+                              />
+                            </Stack>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </TableContainer>
 
               <Stack direction="row" spacing={1}>
                 <Button variant="contained" onClick={handleSaveEvent} disabled={savingEvent}>

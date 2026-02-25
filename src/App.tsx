@@ -23,7 +23,11 @@ function App() {
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <Navigation />
 
-      <Container maxWidth="lg" sx={{ flex: 1, py: 4 }}>
+      <Container
+        maxWidth="lg"
+        disableGutters
+        sx={{ flex: 1, py: { xs: 1.5, sm: 4 }, px: { xs: 0.5, sm: 2 } }}
+      >
         <Routes>
           <Route
             path="/"

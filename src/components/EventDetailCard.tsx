@@ -7,6 +7,7 @@ import {
   Divider,
   Avatar,
   IconButton,
+  TableContainer,
   List,
   ListItem,
   ListItemText,
@@ -156,27 +157,52 @@ function EventDetailCard({ event, details, persons }: EventDetailCardProps) {
       }
     });
 
-    debtors.sort((a, b) => b.cents - a.cents);
-    creditors.sort((a, b) => b.cents - a.cents);
+    const settleBalances = (debts: Balance[], credits: Balance[]) => {
+      const transfers: Array<{ from: string; to: string; fromAlias?: string; toAlias?: string; amount: number }> = [];
+      const debtList = [...debts].sort((a, b) => b.cents - a.cents);
+      const creditList = [...credits].sort((a, b) => b.cents - a.cents);
 
-    const transfers: Array<{ from: string; to: string; fromAlias?: string; toAlias?: string; amount: number }> = [];
-    let i = 0;
-    let j = 0;
-    while (i < debtors.length && j < creditors.length) {
-      const payCents = Math.min(debtors[i].cents, creditors[j].cents);
-      transfers.push({
-        from: debtors[i].name,
-        to: creditors[j].name,
-        fromAlias: debtors[i].alias,
-        toAlias: creditors[j].alias,
-        amount: payCents / 100
-      });
-      debtors[i].cents -= payCents;
-      creditors[j].cents -= payCents;
-      if (debtors[i].cents === 0) i += 1;
-      if (creditors[j].cents === 0) j += 1;
-    }
+      const findFittingCredIndex = (amount: number) => {
+        let bestIdx = -1;
+        let bestSurplus = Number.POSITIVE_INFINITY;
+        creditList.forEach((c, idx) => {
+          if (c.cents >= amount) {
+            const surplus = c.cents - amount;
+            if (surplus < bestSurplus) {
+              bestSurplus = surplus;
+              bestIdx = idx;
+            }
+          }
+        });
+        return bestIdx;
+      };
 
+      for (const debtor of debtList) {
+        let debt = debtor.cents;
+        while (debt > 0 && creditList.length) {
+          let creditIdx = findFittingCredIndex(debt);
+          if (creditIdx === -1) creditIdx = 0; // fall back to largest creditor
+          const creditor = creditList[creditIdx];
+          const pay = Math.min(debt, creditor.cents);
+          transfers.push({
+            from: debtor.name,
+            to: creditor.name,
+            fromAlias: debtor.alias,
+            toAlias: creditor.alias,
+            amount: pay / 100
+          });
+          debt -= pay;
+          creditor.cents -= pay;
+          if (creditor.cents === 0) {
+            creditList.splice(creditIdx, 1);
+          }
+        }
+      }
+
+      return transfers;
+    };
+
+    const transfers = settleBalances(debtors, creditors);
     return { share: +shareDisplay.toFixed(2), transfers };
   }, [attendees]);
 
@@ -188,9 +214,9 @@ function EventDetailCard({ event, details, persons }: EventDetailCardProps) {
   }, [event, persons]);
 
   return (
-    <Card>
-      <CardContent>
-        <Stack spacing={2}>
+    <Card sx={{ boxShadow: { xs: 'none', sm: undefined }, border: { xs: '1px solid', sm: 'none' }, borderColor: { xs: 'divider', sm: 'transparent' } }}>
+      <CardContent sx={{ px: { xs: 1, sm: 2 }, py: { xs: 1.5, sm: 2 } }}>
+        <Stack spacing={{ xs: 1, sm: 2 }}>
           <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ sm: 'center' }}>
             <Stack spacing={0.5}>
               <Typography variant="h6">{event.name || 'Event'} on {event.date}</Typography>
@@ -208,6 +234,124 @@ function EventDetailCard({ event, details, persons }: EventDetailCardProps) {
               <Chip label={`Drinks: ${formatCurrency((event as any).total_drink_cost)}`} size="small" />
             </Stack>
           </Stack>
+
+          <Divider />
+
+          {attendees.length === 0 ? null : (
+            <Stack spacing={1}>
+              <Typography variant="subtitle1">Settlements</Typography>
+              <Stack spacing={0.5}>
+                <Typography variant="body2" color="text.secondary">
+                  Equal split (food only): {splitInfo.foodPeople ? formatCurrency(splitInfo.foodShare) : '—'}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Equal split (drinks only): {splitInfo.drinkPeople ? formatCurrency(splitInfo.drinkShare) : '—'}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Equal split (both): {splitInfo.bothPeople ? formatCurrency(splitInfo.bothShare) : '—'}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Overall equal split per person: {formatCurrency(settlements.share)}
+                </Typography>
+              </Stack>
+              {settlements.transfers.length === 0 ? (
+                <Typography variant="body2" color="text.secondary">
+                  All settled. No transfers needed.
+                </Typography>
+              ) : (
+                <TableContainer sx={{ width: '100%', overflowX: 'auto' }}>
+                  <Table
+                    size="small"
+                    sx={{
+                      width: '100%',
+                      tableLayout: 'fixed',
+                      '& td, & th': { px: { xs: 0.25, sm: 1 }, py: { xs: 0.35, sm: 1 } },
+                      '& th': { fontSize: { xs: 12, sm: 14 }, lineHeight: 1.1 },
+                      '& td': { fontSize: { xs: 12, sm: 14 }, lineHeight: 1.1 }
+                    }}
+                  >
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ width: { xs: '32%', sm: '30%' } }}>From</TableCell>
+                        <TableCell sx={{ width: { xs: '32%', sm: '30%' } }}>To</TableCell>
+                        <TableCell align="right" sx={{ width: { xs: '28%', sm: '25%' } }}>Amount</TableCell>
+                        <TableCell align="right" sx={{ width: { xs: 48, sm: '15%' } }}>
+                          <Typography variant="caption" sx={{ display: { xs: 'none', sm: 'inline' } }}>
+                            Alias
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {settlements.transfers.map((t, idx) => (
+                        <TableRow key={`${t.from}-${t.to}-${idx}`}>
+                          <TableCell>
+                            <Stack direction="row" spacing={{ xs: 0.5, sm: 1 }} alignItems="center">
+                              <Avatar
+                                src={personPhotoByName.get(t.from)}
+                                sx={{ width: 32, height: 32, display: { xs: 'none', sm: 'inline-flex' } }}
+                                alt={t.from}
+                              >
+                                {t.from.charAt(0)}
+                              </Avatar>
+                              <Typography variant="body2">{t.from}</Typography>
+                            </Stack>
+                          </TableCell>
+                          <TableCell>
+                            <Stack direction="row" spacing={{ xs: 0.5, sm: 1 }} alignItems="center">
+                              <Avatar
+                                src={personPhotoByName.get(t.to)}
+                                sx={{ width: 32, height: 32, display: { xs: 'none', sm: 'inline-flex' } }}
+                                alt={t.to}
+                              >
+                                {t.to.charAt(0)}
+                              </Avatar>
+                              <Typography variant="body2">{t.to}</Typography>
+                            </Stack>
+                          </TableCell>
+
+                          <TableCell align="right">
+                            <Stack direction="row" spacing={{ xs: 0.25, sm: 1 }} alignItems="center" justifyContent="flex-end">
+                              <Typography variant="body2">{formatCurrency(t.amount)}</Typography>
+                              <Tooltip title="Copy amount" sx={{ display: { xs: 'none', sm: 'inline-flex' } }}>
+                                <IconButton
+                                  size="small"
+                                  onClick={() => copyText(t.amount.toFixed(2))}
+                                  sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
+                                >
+                                  <ContentCopyIcon fontSize="inherit" />
+                                </IconButton>
+                              </Tooltip>
+                            </Stack>
+                          </TableCell>
+                          <TableCell align="right">
+                            <Stack direction="row" spacing={{ xs: 0.25, sm: 1 }} alignItems="center" justifyContent="flex-end">
+                              {t.toAlias && (
+                                <Typography
+                                  variant="body2"
+                                  color="text.secondary"
+                                  sx={{ display: { xs: 'none', sm: 'inline' } }}
+                                >
+                                  {t.toAlias}
+                                </Typography>
+                              )}
+                              {t.toAlias && (
+                                <Tooltip title="Copy alias">
+                                  <IconButton size="small" onClick={() => copyText(t.toAlias || '')}>
+                                    <ContentCopyIcon fontSize="inherit" />
+                                  </IconButton>
+                                </Tooltip>
+                              )}
+                            </Stack>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              )}
+            </Stack>
+          )}
 
           <Divider />
 
@@ -245,94 +389,6 @@ function EventDetailCard({ event, details, persons }: EventDetailCardProps) {
                 </ListItem>
               ))}
             </List>
-          )}
-
-          <Divider />
-
-          {attendees.length === 0 ? null : (
-            <Stack spacing={1}>
-              <Typography variant="subtitle1">Settlements</Typography>
-              <Stack spacing={0.5}>
-                <Typography variant="body2" color="text.secondary">
-                  Equal split (food only): {splitInfo.foodPeople ? formatCurrency(splitInfo.foodShare) : '—'}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Equal split (drinks only): {splitInfo.drinkPeople ? formatCurrency(splitInfo.drinkShare) : '—'}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Equal split (both): {splitInfo.bothPeople ? formatCurrency(splitInfo.bothShare) : '—'}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Overall equal split per person: {formatCurrency(settlements.share)}
-                </Typography>
-              </Stack>
-              {settlements.transfers.length === 0 ? (
-                <Typography variant="body2" color="text.secondary">
-                  All settled. No transfers needed.
-                </Typography>
-              ) : (
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>From</TableCell>
-                      <TableCell>To</TableCell>
-                      <TableCell>Alias</TableCell>
-                      <TableCell align="right">Amount</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {settlements.transfers.map((t, idx) => (
-                      <TableRow key={`${t.from}-${t.to}-${idx}`}>
-                        <TableCell>
-                          <Stack direction="row" spacing={1} alignItems="center">
-                            <Avatar src={personPhotoByName.get(t.from)} sx={{ width: 32, height: 32 }} alt={t.from}>
-                              {t.from.charAt(0)}
-                            </Avatar>
-                            <Typography variant="body2">{t.from}</Typography>
-                          </Stack>
-                        </TableCell>
-                        <TableCell>
-                          <Stack direction="row" spacing={1} alignItems="center">
-                            <Avatar src={personPhotoByName.get(t.to)} sx={{ width: 32, height: 32 }} alt={t.to}>
-                              {t.to.charAt(0)}
-                            </Avatar>
-                            <Typography variant="body2">{t.to}</Typography>
-                          </Stack>
-                        </TableCell>
-
-                        <TableCell>
-                          <Stack direction="row" spacing={1} alignItems="center">
-                            {t.toAlias && (
-                              <Typography variant="body2" color="text.secondary">
-                                {t.toAlias}
-                              </Typography>
-                            )}
-                            {t.toAlias && (
-                              <Tooltip title="Copy alias">
-                                <IconButton size="small" onClick={() => copyText(t.toAlias || '')}>
-                                  <ContentCopyIcon fontSize="inherit" />
-                                </IconButton>
-                              </Tooltip>
-                            )}
-
-                          </Stack>
-                        </TableCell>
-                        <TableCell align="right">
-                          <Stack direction="row" spacing={1} alignItems="center" justifyContent="flex-end">
-                            <Typography>{formatCurrency(t.amount)}</Typography>
-                            <Tooltip title="Copy amount">
-                              <IconButton size="small" onClick={() => copyText(t.amount.toFixed(2))}>
-                                <ContentCopyIcon fontSize="inherit" />
-                              </IconButton>
-                            </Tooltip>
-                          </Stack>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </Stack>
           )}
         </Stack>
       </CardContent>

@@ -8,6 +8,7 @@ import {
   Avatar,
   IconButton,
   Stack,
+  TableContainer,
   Table,
   TableBody,
   TableCell,
@@ -354,71 +355,83 @@ function Administration() {
               No persons yet. Add one using the form above.
             </Typography>
           ) : (
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Name</TableCell>
-                  <TableCell>Alias</TableCell>
-                  <TableCell>Photo</TableCell>
-                  <TableCell>Birthdate</TableCell>
-                  <TableCell>Email</TableCell>
-                  <TableCell align="right">Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {sortedPersons.map((person) => (
-                  <TableRow key={person.id ?? person.name} hover>
-                    <TableCell>
-                      <Stack direction="row" spacing={1} alignItems="center">
-                        <Avatar src={person.photo || undefined} sx={{ width: 32, height: 32 }} alt={person.name}>
-                          {person.name.charAt(0)}
-                        </Avatar>
-                        <Typography variant="body2">{person.name}</Typography>
-                      </Stack>
-                    </TableCell>
-                    <TableCell>
-                      <Stack direction="row" spacing={1} alignItems="center">
-                        <span>{person.alias || '—'}</span>
-                        <Tooltip title={person.alias ? 'Copy alias' : 'No alias to copy'}>
-                          <span>
-                            <IconButton
-                              aria-label="Copy alias"
-                              onClick={() => handleCopyAlias(person.alias)}
-                              size="small"
-                              disabled={!person.alias || saving}
-                            >
-                              <ContentCopyIcon fontSize="small" />
-                            </IconButton>
-                          </span>
-                        </Tooltip>
-                      </Stack>
-                    </TableCell>
-                    <TableCell>
-                      {person.photo ? (
-                        <Avatar src={person.photo} sx={{ width: 28, height: 28 }} alt={person.name} />
-                      ) : (
-                        '—'
-                      )}
-                    </TableCell>
-                    <TableCell>{person.birthdate || '—'}</TableCell>
-                    <TableCell>{person.email || '—'}</TableCell>
-                    <TableCell align="right">
-                      <IconButton aria-label="Edit" onClick={() => handleEdit(person)} size="small" disabled={saving}>
-                        <EditIcon fontSize="small" />
-                      </IconButton>
-                      <IconButton
-                        aria-label="Delete"
-                        onClick={() => handleDelete(person.id)}
-                        size="small"
-                        disabled={saving || !canDeletePersons}
-                      >
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
-                    </TableCell>
+            <TableContainer sx={{ width: '100%', overflowX: 'auto' }}>
+              <Table size="small" sx={{ width: '100%', tableLayout: 'fixed' }}>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Name</TableCell>
+                    <TableCell>Photo</TableCell>
+                    <TableCell>Birthdate</TableCell>
+                    <TableCell>Email</TableCell>
+                    <TableCell align="right">Actions</TableCell>
+                    <TableCell align="right">Alias</TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHead>
+                <TableBody>
+                  {sortedPersons.map((person) => (
+                    <TableRow key={person.id ?? person.name} hover>
+                      <TableCell>
+                        <Stack direction="row" spacing={1} alignItems="center">
+                          <Avatar
+                            src={person.photo || undefined}
+                            sx={{ width: 32, height: 32, display: { xs: 'none', sm: 'inline-flex' } }}
+                            alt={person.name}
+                          >
+                            {person.name.charAt(0)}
+                          </Avatar>
+                          <Typography variant="body2">{person.name}</Typography>
+                        </Stack>
+                      </TableCell>
+                      <TableCell>
+                        {person.photo ? (
+                          <Avatar
+                            src={person.photo}
+                            sx={{ width: 28, height: 28, display: { xs: 'none', sm: 'inline-flex' } }}
+                            alt={person.name}
+                          />
+                        ) : (
+                          '—'
+                        )}
+                      </TableCell>
+                      <TableCell>{person.birthdate || '—'}</TableCell>
+                      <TableCell>{person.email || '—'}</TableCell>
+                      <TableCell align="right">
+                        <IconButton aria-label="Edit" onClick={() => handleEdit(person)} size="small" disabled={saving}>
+                          <EditIcon fontSize="small" />
+                        </IconButton>
+                        <IconButton
+                          aria-label="Delete"
+                          onClick={() => handleDelete(person.id)}
+                          size="small"
+                          disabled={saving || !canDeletePersons}
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </TableCell>
+                      <TableCell align="right">
+                        <Stack direction="row" spacing={1} alignItems="center" justifyContent="flex-end">
+                          <Typography variant="body2" sx={{ display: { xs: 'none', sm: 'inline' } }}>
+                            {person.alias || '—'}
+                          </Typography>
+                          <Tooltip title={person.alias ? 'Copy alias' : 'No alias to copy'}>
+                            <span>
+                              <IconButton
+                                aria-label="Copy alias"
+                                onClick={() => handleCopyAlias(person.alias)}
+                                size="small"
+                                disabled={!person.alias || saving}
+                              >
+                                <ContentCopyIcon fontSize="small" />
+                              </IconButton>
+                            </span>
+                          </Tooltip>
+                        </Stack>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
           )}
         </CardContent>
       </Card>
@@ -467,54 +480,56 @@ function Administration() {
               No locations yet. Add one using the form above.
             </Typography>
           ) : (
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Name</TableCell>
-                  <TableCell>Address</TableCell>
-                  <TableCell>Maps</TableCell>
-                  <TableCell align="right">Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {sortedLocations.map((loc) => (
-                  <TableRow key={loc.id ?? loc.name} hover>
-                    <TableCell>
-                      <Stack direction="row" spacing={1} alignItems="center">
-                        <Avatar sx={{ width: 32, height: 32 }}>{loc.name.charAt(0)}</Avatar>
-                        <Typography variant="body2">{loc.name}</Typography>
-                      </Stack>
-                    </TableCell>
-                    <TableCell>{loc.address || '—'}</TableCell>
-                    <TableCell>
-                      {loc.maps_url ? (
-                        <MuiLink href={loc.maps_url} target="_blank" rel="noopener noreferrer">
-                          Maps
-                        </MuiLink>
-                      ) : (
-                        '—'
-                      )}
-                    </TableCell>
-                    <TableCell align="right">
-                      <Tooltip title="Edit">
-                        <span>
-                          <IconButton aria-label="Edit" onClick={() => handleLocationEdit(loc)} size="small" disabled={locationSaving}>
-                            <EditIcon fontSize="small" />
-                          </IconButton>
-                        </span>
-                      </Tooltip>
-                      <Tooltip title="Delete">
-                        <span>
-                          <IconButton aria-label="Delete" onClick={() => handleLocationDelete(loc.id)} size="small" disabled={locationSaving}>
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
-                        </span>
-                      </Tooltip>
-                    </TableCell>
+            <TableContainer sx={{ width: '100%', overflowX: 'auto' }}>
+              <Table size="small" sx={{ width: '100%', tableLayout: 'fixed' }}>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Name</TableCell>
+                    <TableCell>Address</TableCell>
+                    <TableCell>Maps</TableCell>
+                    <TableCell align="right">Actions</TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHead>
+                <TableBody>
+                  {sortedLocations.map((loc) => (
+                    <TableRow key={loc.id ?? loc.name} hover>
+                      <TableCell>
+                        <Stack direction="row" spacing={1} alignItems="center">
+                          <Avatar sx={{ width: 32, height: 32, display: { xs: 'none', sm: 'inline-flex' } }}>{loc.name.charAt(0)}</Avatar>
+                          <Typography variant="body2">{loc.name}</Typography>
+                        </Stack>
+                      </TableCell>
+                      <TableCell>{loc.address || '—'}</TableCell>
+                      <TableCell>
+                        {loc.maps_url ? (
+                          <MuiLink href={loc.maps_url} target="_blank" rel="noopener noreferrer">
+                            Maps
+                          </MuiLink>
+                        ) : (
+                          '—'
+                        )}
+                      </TableCell>
+                      <TableCell align="right">
+                        <Tooltip title="Edit">
+                          <span>
+                            <IconButton aria-label="Edit" onClick={() => handleLocationEdit(loc)} size="small" disabled={locationSaving}>
+                              <EditIcon fontSize="small" />
+                            </IconButton>
+                          </span>
+                        </Tooltip>
+                        <Tooltip title="Delete">
+                          <span>
+                            <IconButton aria-label="Delete" onClick={() => handleLocationDelete(loc.id)} size="small" disabled={locationSaving}>
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </span>
+                        </Tooltip>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
           )}
         </CardContent>
       </Card>

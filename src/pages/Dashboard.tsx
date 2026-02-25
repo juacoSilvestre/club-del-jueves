@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Avatar, Box, Card, CardContent, CircularProgress, Grid, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material';
+import { Avatar, Box, Card, CardContent, CircularProgress, Grid, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import type { Event, EventDetail, Person } from '../db';
 import { getEventDetailsByEvent, getEvents, getPersons } from '../db';
@@ -250,42 +250,48 @@ const TopTable = ({ title, rows, valueLabel }: { title: string; rows: StatRow[];
           Nothing to show yet.
         </Typography>
       ) : (
-        <Table size="small" aria-label={`${title} table`}>
-          <TableHead>
-            <TableRow>
-              <TableCell>Name</TableCell>
-              <TableCell align="right">{valueLabel}</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {topRows.map((row) => (
-              <TableRow key={row.label} hover>
-                <TableCell>
-                  <Stack direction="row" spacing={1} alignItems="center">
-                    {row.avatarUrl && (
-                      <Avatar src={row.avatarUrl} sx={{ width: 32, height: 32 }} alt={row.label}>
-                        {row.label.charAt(0)}
-                      </Avatar>
-                    )}
-                    <Stack spacing={0.25}>
-                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                        {row.label}
-                      </Typography>
-                      {row.secondary && (
-                        <Typography variant="caption" color="text.secondary">
-                          {row.secondary}
-                        </Typography>
-                      )}
-                    </Stack>
-                  </Stack>
-                </TableCell>
-                <TableCell align="right" sx={{ fontWeight: 600 }}>
-                  {row.value}
-                </TableCell>
+        <TableContainer sx={{ width: '100%', overflowX: 'auto' }}>
+          <Table size="small" aria-label={`${title} table`} sx={{ width: '100%', tableLayout: 'fixed' }}>
+            <TableHead>
+              <TableRow>
+                <TableCell>Name</TableCell>
+                <TableCell align="right">{valueLabel}</TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHead>
+            <TableBody>
+              {topRows.map((row) => (
+                <TableRow key={row.label} hover>
+                  <TableCell>
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      {row.avatarUrl && (
+                        <Avatar
+                          src={row.avatarUrl}
+                          sx={{ width: 32, height: 32, display: { xs: 'none', sm: 'inline-flex' } }}
+                          alt={row.label}
+                        >
+                          {row.label.charAt(0)}
+                        </Avatar>
+                      )}
+                      <Stack spacing={0.25}>
+                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                          {row.label}
+                        </Typography>
+                        {row.secondary && (
+                          <Typography variant="caption" color="text.secondary">
+                            {row.secondary}
+                          </Typography>
+                        )}
+                      </Stack>
+                    </Stack>
+                  </TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 600 }}>
+                    {row.value}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
       )}
       {rows.length > topRows.length && (
         <Typography variant="caption" color="text.secondary">
@@ -540,46 +546,52 @@ const Dashboard = () => {
                     No recorded food or drink purchases yet.
                   </Typography>
                 ) : (
-                  <Table size="small" aria-label="person contributions table">
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>Name</TableCell>
-                        <TableCell align="right">Food buys</TableCell>
-                        <TableCell align="right">Drink buys</TableCell>
-                        <TableCell align="right">Total</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {contributionRows.slice(0, 8).map((row) => (
-                        <TableRow key={row.label} hover>
-                          <TableCell>
-                            <Stack direction="row" spacing={1} alignItems="center">
-                              {row.avatarUrl && (
-                                <Avatar src={row.avatarUrl} sx={{ width: 32, height: 32 }} alt={row.label}>
-                                  {row.label.charAt(0)}
-                                </Avatar>
-                              )}
-                              <Stack spacing={0.25}>
-                                <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                                  {row.label}
-                                </Typography>
-                                {row.secondary && (
-                                  <Typography variant="caption" color="text.secondary">
-                                    {row.secondary}
-                                  </Typography>
-                                )}
-                              </Stack>
-                            </Stack>
-                          </TableCell>
-                          <TableCell align="right">{row.food}</TableCell>
-                          <TableCell align="right">{row.drink}</TableCell>
-                          <TableCell align="right" sx={{ fontWeight: 600 }}>
-                            {row.value}
-                          </TableCell>
+                  <TableContainer sx={{ width: '100%', overflowX: 'auto' }}>
+                    <Table size="small" aria-label="person contributions table" sx={{ width: '100%', tableLayout: 'fixed' }}>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>Name</TableCell>
+                          <TableCell align="right">Food buys</TableCell>
+                          <TableCell align="right">Drink buys</TableCell>
+                          <TableCell align="right">Total</TableCell>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHead>
+                      <TableBody>
+                        {contributionRows.slice(0, 8).map((row) => (
+                          <TableRow key={row.label} hover>
+                            <TableCell>
+                              <Stack direction="row" spacing={1} alignItems="center">
+                                {row.avatarUrl && (
+                                  <Avatar
+                                    src={row.avatarUrl}
+                                    sx={{ width: 32, height: 32, display: { xs: 'none', sm: 'inline-flex' } }}
+                                    alt={row.label}
+                                  >
+                                    {row.label.charAt(0)}
+                                  </Avatar>
+                                )}
+                                <Stack spacing={0.25}>
+                                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                    {row.label}
+                                  </Typography>
+                                  {row.secondary && (
+                                    <Typography variant="caption" color="text.secondary">
+                                      {row.secondary}
+                                    </Typography>
+                                  )}
+                                </Stack>
+                              </Stack>
+                            </TableCell>
+                            <TableCell align="right">{row.food}</TableCell>
+                            <TableCell align="right">{row.drink}</TableCell>
+                            <TableCell align="right" sx={{ fontWeight: 600 }}>
+                              {row.value}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
                 )}
                 {contributionRows.length > 8 && (
                   <Typography variant="caption" color="text.secondary">
